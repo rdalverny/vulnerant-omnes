@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+  html, body {}
+  canvas {
+    display: block;
+    margin: 5rem auto;
+  }
+  </style>
+  <script src="js/jquery.min.js"></script>
+</head>
+<body>
+
+<script type="application/processing">
+  // Draft for a 24-hour clock dial.
+  //
+  // (c) 2015 Romain d'Alverny <rdalverny@gmail.com>
+  // Nantes, France
+  // Licensed under GPL v2
+  //
+  // Uses JS, Processing.js, jQuery.
+  // Uses http://sunrise-sunset.org/api for sunrise/set local times.
+
+  int cx, cy;
+  float secondsRadius;
+  float minutesRadius;
+  float hoursRadius;
+  float clockDiameter;
+
+  PFont font;
+  //font = loadFont('baskerville');
+  //font = loadFont('big caslon');
+  //font = loadFont('cochin');
+  //font = loadFont('chalkduster');
+  //font = loadFont('lato');
+  font = loadFont('open sans condensed');
+  textFont(font, 30);
+
+  var sunset;
+  var sunrise;
+  var twilight_begin;
+  var twilight_end;
+  var solar_noon;
+
+  int SHOW_12 = 0;        // Show 2 0-12 sets.
+  int SHOW_ROMAN = 0;
+  int SHOW_ALL_HOURS = 1; // Show all hours.
+  int SHOW_TOP_0 = 0;     // Show 0/midnight on top.
+  int SHOW_NIGHTTIME = 1; //
+  int TH_IX = 1;          // Theme; 0 for dark, 1 for light.
+
+  var DAYS = ['dimanche', 'lundi', 'mardi',
+              'mercredi', 'jeudi', 'vendredi',
+              'samedi'];
+
+  var MONTHS = ['janvier', 'février', 'mars',
+                'avril', 'mai', 'juin',
+                'juillet', 'août', 'septembre',
+                'octobre', 'novembre', 'décembre'];
+
+  var ROMAN_HOURS = {
+    a_1: 'I', a_2: 'II', a_3: 'III', a_4: 'IV',
+    a_5: 'V', a_6: 'VI', a_7: 'VII', a_8: 'VIII',
+    a_9: 'IX', a_10: 'X', a_11: 'XI', a_12: 'XII'
+  };
+
+  var THEMES = [
+    [
+      0,   // 0: background
+      255, // 1: default color
+      80,  // 2: dial background
+      180, // 3: dial hours
+      200, // 4: dial minutes ticks
+      60,  // 5: twilight
+      50,  // 6: dusk
+      110, // 7: calendar next/prev day
+      220, // 8: calendar current day
+    ],
+    [
+      220,
+      0,
+      240,
+      80,
+      20,
+      200,
+      190,
+      160,
+      10,
+    ]
+  ];
+  var TH = THEMES[TH_IX];
+
+  if (TH_IX == 0) {
+    document.getElementsByTagName('body')[0].style.background = '#000';
+    document.getElementsByTagName('html')[0].style.background = '#000';
+  } else {
+    document.getElementsByTagName('html')[0].style.background = 'rgb(220, 220, 220)';
+    document.getElementsByTagName('body')[0].style.background = 'rgb(220, 220, 220)';
+  }
+
+  void get_geolocation()
+  {
+    // TODO or check if it's expired
+    if (null === window.localStorage.getItem('pos')) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (pos) {
+
+          window.localStorage.setItem('pos', [pos.coords.latitude, pos.coords.longitude].join(';'));
+          get_sunrise();
+        });
+      }
+    } else {
+      get_sunrise();
+    }
+  }
+
+  void get_sunrise()
+  {
+    var pos = window.localStorage.getItem('pos').split(';');
+
+    jQuery.ajax({
+        url: "http://api.sunrise-sunset.org/json?lat=" + pos[0] + "&lng=" + pos[1] + "&date=today&formatted=0",
+        success: function(data) {
+          sunset         = new Date(data.results.sunset);
+          sunrise        = new Date(data.results.sunrise);
+          twilight_begin = new Date(data.results.civil_twilight_begin);
+          twilight_end   = new Date(data.results.civil_twilight_end);
+          solar_noon     = new Date(data.results.solar_noon);
+        }
+    });
+  }
+
+  void setup()
+  {
+    size(640, 640);
+    stroke(TH[1]);
+
+    int radius = min(width, height) / 2;
+    secondsRadius = radius * 0.85;
+    minutesRadius = radius * 0.65;
+    hoursRadius   = radius * 0.70;
+    clockDiameter = radius * 1.8;
+
+    cx = width / 2;
+    cy = height / 2;
+
+    get_geolocation();
+
+    frameRate(10);
+  }
+
+  /**
+  */
+  float hour2radian(hour, minute)
+  {
+    return map(hour + norm(minute, 0, 60), 0, 24, 0, TWO_PI) + HALF_PI + SHOW_TOP_0 * PI;
+  }
+
+  float str_hour2radian(hour)
+  {
+    hour = hour.split(':').map(function (el) { return parseInt(el); });
+    return hour2radian(hour[0], hour[1]);
+  }
+
+  /**
+  */
+  void event(now_hour, hour, minute, label)
+  {
+    labelRadius = secondsRadius + 20;
+    if (true) {
+    //if (hour - now_hour > -1) {
+
+      var a = hour2radian(hour, minute);
+
+      stroke(0,0,255);
+      strokeWeight(1);
+      fill(0,0,255);
+      ellipse(cx + cos(a) * labelRadius,
+              cy + sin(a) * labelRadius,
+              4,
+              4);
+
+      if (hour - now_hour < 3 && hour > now_hour)
+        line(cx, cy, cx + cos(a) * labelRadius, cy + sin(a) * labelRadius);
+
+
+      fill(200,200,200);
+      textAlign(CENTER);
+      textFont(font, 12);
+      text(label, cx + cos(a) * labelRadius, cy + sin(a) * labelRadius);
+    }
+  }
+
+  void hours_ticks()
+  {
+    textAlign(CENTER);
+
+    // Draw the hour ticks
+    strokeWeight(4);
+    beginShape(POINTS);
+    int now = hour();
+
+    for (int seg = 0; seg < 144; seg += 1) {
+      float angle = PI / 360 * seg * 10; // 20-min steps
+      float angle = PI / 360 * seg * 7.5; // 15-min steps
+      float angle = PI / 360 * seg * 5; // 10-min steps
+
+      htl = (seg % 3 == 0) ? 30 : 40;
+
+      stroke(TH[3]);
+      strokeWeight(1);
+      line(cx + cos(angle) * (hoursRadius + htl),
+           cy + sin(angle) * (hoursRadius + htl),
+           cx + cos(angle) * (hoursRadius + 50),
+           cy + sin(angle) * (hoursRadius + 50));
+    }
+
+    for (int h = 0; h < 24; h += 1) {
+      float angle = radians((h + 6)%24 * 15) + SHOW_TOP_0 * PI;
+      float x = cx + cos(angle) * hoursRadius;
+      float y = cy + sin(angle) * hoursRadius;
+      //vertex(x, y);
+
+      htl = (h % 2 == 0) ? 18 : 6;
+
+      stroke(TH[4]);
+      strokeWeight(2);
+      line(cx + cos(angle) * (hoursRadius + htl),
+           cy + sin(angle) * (hoursRadius + htl),
+           cx + cos(angle) * (hoursRadius + 50),
+           cy + sin(angle) * (hoursRadius + 50));
+
+      // quand la nouvelle approche (H+1), la faire gonfler/briller progressivement,
+      // au moins au même niveau que l'ancienne
+      // et quand la bascule se fait, faire se dégonfler l'ancienne (H-1 maintenant), et disparaitre progressivement H-2
+
+      // only show 1 hour before now, and 9 hours after
+      // FIXME, when now is in {0..13} it does not work as expected
+      //if (false || (now - 2) < h || h < ((now + 10) % 24)) {
+      if (SHOW_ALL_HOURS || h == 0 || (h - now) <= 6 && (h - now) >= -1) {
+        if (h == now)        { fill(TH[1]); textFont(font, 35); }
+        else if (h % 2 == 0) { fill(TH[3]); textFont(font, 35); }
+
+        label = h;
+
+        if (SHOW_12 && h > 12) {
+          label = h - 12;
+        }
+
+        ydiff = 12;
+
+        if (SHOW_ROMAN) {
+          var k = 'a_' + h.toString();
+          if (k in ROMAN_HOURS) {
+            label = ROMAN_HOURS[k];
+          }
+        }
+
+        if (h % 2 == 0) text(label, x, y + ydiff);
+      }
+    }
+    endShape();
+  }
+
+  /**
+   * Draw date on clock.
+   * During the day, just print today.
+   * Between 20:00 and 0:00, display today and the coming day,
+   * in a fade animation.
+  */
+  void calendar()
+  {
+    var today = new Date();
+
+    if (today.getHours() > 20) {
+      var tomorrow = new Date();
+      tomorrow.setDate(today.getDate() + 1);
+
+      stroke(TH[7]);
+      strokeWeight(2);
+      line(cx, cy + 60, cx, cy + 140);
+
+      var nextMonth = (tomorrow.getMonth() != today.getMonth()) ? tomorrow.getMonth() : ''
+      var stomorrow = join([tomorrow.getDate().toString(), nextMonth], ' ').trim();
+
+      fill(TH[7]);
+      textAlign(RIGHT);
+      textFont(font, 14);
+      text(DAYS[tomorrow.getDay()], cx - 10, cy + 96);
+      text(stomorrow, cx - 10, cy + 116);
+
+      fill(TH[8]);
+      textAlign(LEFT);
+      var stoday = join([today.getDate().toString(), MONTHS[today.getMonth()]], ' ').trim();
+      textFont(font, 14);
+      text(DAYS[today.getDay()], cx + 10, cy + 96);
+      textFont(font, 18);
+      text(stoday, cx + 10, cy + 116);
+
+    } else if (today.getHours() < 1) {
+      var yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+
+      stroke(TH[7]);
+      strokeWeight(2);
+      line(cx, cy + 60, cx, cy + 140);
+
+      var prevMonth = (yesterday.getMonth() != today.getMonth()) ? yesterday.getMonth() : ''
+      var syesterday = join([yesterday.getDate().toString(), prevMonth], ' ').trim();
+
+      fill(TH[7]);
+      textAlign(LEFT);
+      textFont(font, 14);
+      text(DAYS[yesterday.getDay()], cx + 10, cy + 96);
+      text(syesterday, cx + 10, cy + 116);
+
+      fill(TH[8]);
+      textAlign(RIGHT);
+      var stoday = join([today.getDate().toString(), MONTHS[today.getMonth()]], ' ').trim();
+      textFont(font, 14);
+      text(DAYS[today.getDay()], cx - 10, cy + 96);
+      textFont(font, 18);
+      text(stoday, cx - 10, cy + 116);
+
+    } else {
+      fill(TH[8]);
+      textAlign(CENTER);
+      var stoday = join([today.getDate().toString(), MONTHS[today.getMonth()]], ' ');
+      textFont(font, 14);
+      text(DAYS[today.getDay()], cx, cy + 96);
+      textFont(font, 18);
+      text(stoday, cx, cy + 116);
+    }
+  }
+
+  void hour_now(h)
+  {
+    //stroke(255, 100, 100);
+    stroke(100, 100, 255);
+    strokeWeight(3);
+    line(cx - cos(h) * 20,
+         cy - sin(h) * 20,
+         cx + cos(h) * (hoursRadius + 20),
+         cy + sin(h) * (hoursRadius + 20));
+  }
+
+  void complication_nighttime()
+  {
+    if (!sunset instanceof Date) {
+      return;
+    }
+
+    var r_sunset  = hour2radian(sunset.getHours(), sunset.getMinutes());
+    var r_sunrise = hour2radian(sunrise.getHours(), sunrise.getMinutes());
+
+    var r_twilight_begin = hour2radian(twilight_begin.getHours(), twilight_begin.getMinutes());
+    var r_twilight_end = hour2radian(twilight_end.getHours(), twilight_end.getMinutes());
+
+    fill(TH[5]);
+    arc(cx, cy,
+        hoursRadius * 2.4, hoursRadius * 2.4,
+        r_sunset, r_sunrise + TWO_PI);
+
+    fill(TH[6]);
+    arc(cx, cy,
+        hoursRadius * 2.4, hoursRadius * 2.4,
+        r_twilight_end, r_twilight_begin + TWO_PI);
+  }
+
+  void complication_solar_noon()
+  {
+    if (null === solar_noon)
+      return;
+
+    var r_noon = hour2radian(solar_noon.getHours(), solar_noon.getMinutes());
+
+    fill(255, 200, 0);
+    stroke(255, 200, 0);
+    float x = cx + cos(r_noon) * (hoursRadius + 56);
+    float y = cy + sin(r_noon) * (hoursRadius + 56);
+    ellipse(x, y, 10, 10);
+  }
+
+  void signature()
+  {
+    // TODO
+  }
+
+  void draw()
+  {
+    frameRate(1);
+    background(TH[0]);
+    fill(TH[2]);
+    noStroke();
+    ellipse(cx, cy, clockDiameter, clockDiameter);
+
+    float h = hour2radian(hour(), minute());
+
+    strokeCap(SQUARE);
+
+    complication_nighttime();
+    complication_solar_noon();
+
+    hours_ticks();
+    hour_now(h);
+    calendar();
+
+    //event(hour(), 7, 0, 'debout !');
+    //event(hour(), 8, 45, 'école !');
+    //signature();
+  }
+  </script>
+  <canvas></canvas>
+  <script src="js/processing.min.js"></script>
+
+</body>
+</html>
