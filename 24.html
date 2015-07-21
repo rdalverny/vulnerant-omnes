@@ -197,8 +197,6 @@
 
   void hours_ticks()
   {
-    textAlign(CENTER);
-
     // Draw the hour ticks
     strokeWeight(4);
     beginShape(POINTS);
@@ -219,6 +217,7 @@
            cy + sin(angle) * (hoursRadius + 50));
     }
 
+    textAlign(CENTER);
     for (int h = 0; h < 24; h += 1) {
       float angle = radians((h + 6)%24 * 15) + SHOW_TOP_0 * PI;
       float x = cx + cos(angle) * hoursRadius;
@@ -244,7 +243,7 @@
       if (SHOW_ALL_HOURS || h == 0 || (h - now) <= 6 && (h - now) >= -1) {
         if (h == now)        { fill(TH[1]); textFont(font, 45); }
         else if (h % 2 == 0) { fill(TH[3]); textFont(font, 40); }
-        else                 { fill(TH[3]), textFont(font, 20); }
+        else                 { fill(TH[3]), textFont(font, 24); }
 
         label = h;
 
@@ -343,23 +342,26 @@
   {
     if (other == 1) {
       stroke(255, 200, 100);
-      strokeWeight(1);
       fill(230, 180, 80);
+      strokeWeight(1);
     } else {
       stroke(100, 100, 255);
+      fill(80, 80, 230);
       strokeWeight(4);
     }
+
     line(cx - cos(h) * 30,
          cy - sin(h) * 30,
-         cx + cos(h) * (hoursRadius + 20),
-         cy + sin(h) * (hoursRadius + 20));
+         cx + cos(h) * (hoursRadius + 30),
+         cy + sin(h) * (hoursRadius + 30));
 
+    float x = cx + cos(h) * (hoursRadius + 65);
+    float y = cy + sin(h) * (hoursRadius + 65);
+    textAlign(CENTER);
     if (label) {
-      float x = cx + cos(h) * (hoursRadius - 80);
-      float y = cy + sin(h) * (hoursRadius - 80);
-
-      textAlign(CENTER);
       text(label, x, y);
+    } else {
+      text(minute(), x, y);
     }
   }
 
@@ -377,12 +379,12 @@
 
     var rc = 2.57;
 
-    fill(TH[5]);
+    fill(TH[5], TH[5], TH[5] + 50);
     arc(cx, cy,
         hoursRadius * rc, hoursRadius * rc,
         r_sunset, r_sunrise + TWO_PI);
 
-    fill(TH[6] - 20);
+    fill(TH[6] - 20, TH[6] - 20, TH[6] + 30);
     arc(cx, cy,
         hoursRadius * rc, hoursRadius * rc,
         r_twilight_end, r_twilight_begin + TWO_PI);
