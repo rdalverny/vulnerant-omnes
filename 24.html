@@ -38,7 +38,9 @@
   //font = loadFont('chalkduster');
   //font = loadFont('lato');
   font = loadFont('open sans condensed');
-  textFont(font, 30);
+
+  var fontsizes = [30];
+  textFont(font, fontsizes[0]);
 
   var sunset;
   var sunrise;
@@ -242,8 +244,9 @@
       // FIXME, when now is in {0..13} it does not work as expected
       //if (false || (now - 2) < h || h < ((now + 10) % 24)) {
       if (SHOW_ALL_HOURS || h == 0 || (h - now) <= 6 && (h - now) >= -1) {
-        if (h == now)        { fill(TH[1]); textFont(font, 35); }
-        else if (h % 2 == 0) { fill(TH[3]); textFont(font, 35); }
+        if (h == now)        { fill(TH[1]); textFont(font, 45); }
+        else if (h % 2 == 0) { fill(TH[3]); textFont(font, 40); }
+        else                 { fill(TH[3]), textFont(font, 20); }
 
         label = h;
 
@@ -251,7 +254,7 @@
           label = h - 12;
         }
 
-        ydiff = 12;
+        ydiff = 16;
 
         if (SHOW_ROMAN) {
           var k = 'a_' + h.toString();
@@ -260,7 +263,7 @@
           }
         }
 
-        if (h % 2 == 0) text(label, x, y + ydiff);
+        if (true || h % 2 == 0) text(label, x, y + ydiff);
       }
     }
     endShape();
@@ -274,6 +277,7 @@
   */
   void calendar()
   {
+    var fontsizes = [20, 24];
     var today = new Date();
 
     if (today.getHours() > 20) {
@@ -289,17 +293,17 @@
 
       fill(TH[7]);
       textAlign(RIGHT);
-      textFont(font, 14);
+      textFont(font, fontsizes[0]);
       text(DAYS[tomorrow.getDay()], cx - 10, cy + 96);
-      text(stomorrow, cx - 10, cy + 116);
+      text(stomorrow, cx - 10, cy + 96 + 28);
 
       fill(TH[8]);
       textAlign(LEFT);
       var stoday = join([today.getDate().toString(), MONTHS[today.getMonth()]], ' ').trim();
-      textFont(font, 14);
+      textFont(font, fontsizes[0]);
       text(DAYS[today.getDay()], cx + 10, cy + 96);
-      textFont(font, 18);
-      text(stoday, cx + 10, cy + 116);
+      textFont(font, fontsizes[1]);
+      text(stoday, cx + 10, cy + 96 + 28);
 
     } else if (today.getHours() < 1) {
       var yesterday = new Date();
@@ -314,26 +318,26 @@
 
       fill(TH[7]);
       textAlign(LEFT);
-      textFont(font, 14);
+      textFont(font, fontsizes[0]);
       text(DAYS[yesterday.getDay()], cx + 10, cy + 96);
-      text(syesterday, cx + 10, cy + 116);
+      text(syesterday, cx + 10, cy + 96 + 28);
 
       fill(TH[8]);
       textAlign(RIGHT);
       var stoday = join([today.getDate().toString(), MONTHS[today.getMonth()]], ' ').trim();
-      textFont(font, 14);
+      textFont(font, fontsizes[0]);
       text(DAYS[today.getDay()], cx - 10, cy + 96);
-      textFont(font, 18);
-      text(stoday, cx - 10, cy + 116);
+      textFont(font, fontsizes[1]);
+      text(stoday, cx - 10, cy + 96 + 28);
 
     } else {
       fill(TH[8]);
       textAlign(CENTER);
       var stoday = join([today.getDate().toString(), MONTHS[today.getMonth()]], ' ');
-      textFont(font, 14);
+      textFont(font, fontsizes[0]);
       text(DAYS[today.getDay()], cx, cy + 96);
-      textFont(font, 18);
-      text(stoday, cx, cy + 116);
+      textFont(font, fontsizes[1]);
+      text(stoday, cx, cy + 96 + 28);
     }
   }
 
