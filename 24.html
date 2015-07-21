@@ -277,7 +277,7 @@
   */
   void calendar()
   {
-    var fontsizes = [20, 24];
+    var fontsizes = [26, 30];
     var today = new Date();
 
     if (today.getHours() > 20) {
@@ -295,7 +295,7 @@
       textAlign(RIGHT);
       textFont(font, fontsizes[0]);
       text(DAYS[tomorrow.getDay()], cx - 10, cy + 96);
-      text(stomorrow, cx - 10, cy + 96 + 28);
+      text(stomorrow, cx - 10, cy + 96 + fontsizes[1]);
 
       fill(TH[8]);
       textAlign(LEFT);
@@ -303,7 +303,7 @@
       textFont(font, fontsizes[0]);
       text(DAYS[today.getDay()], cx + 10, cy + 96);
       textFont(font, fontsizes[1]);
-      text(stoday, cx + 10, cy + 96 + 28);
+      text(stoday, cx + 10, cy + 96 + fontsizes[1]);
 
     } else if (today.getHours() < 1) {
       var yesterday = new Date();
@@ -320,7 +320,7 @@
       textAlign(LEFT);
       textFont(font, fontsizes[0]);
       text(DAYS[yesterday.getDay()], cx + 10, cy + 96);
-      text(syesterday, cx + 10, cy + 96 + 28);
+      text(syesterday, cx + 10, cy + 96 + fontsizes[1]);
 
       fill(TH[8]);
       textAlign(RIGHT);
@@ -328,7 +328,7 @@
       textFont(font, fontsizes[0]);
       text(DAYS[today.getDay()], cx - 10, cy + 96);
       textFont(font, fontsizes[1]);
-      text(stoday, cx - 10, cy + 96 + 28);
+      text(stoday, cx - 10, cy + 96 + fontsizes[1]);
 
     } else {
       fill(TH[8]);
