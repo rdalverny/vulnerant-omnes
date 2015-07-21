@@ -335,19 +335,32 @@
       textFont(font, fontsizes[0]);
       text(DAYS[today.getDay()], cx, cy + 96);
       textFont(font, fontsizes[1]);
-      text(stoday, cx, cy + 96 + 28);
+      text(stoday, cx, cy + 96 + fontsizes[1]);
     }
   }
 
-  void hour_now(h)
+  void hour_now(h, other, label)
   {
-    //stroke(255, 100, 100);
-    stroke(100, 100, 255);
-    strokeWeight(3);
-    line(cx - cos(h) * 20,
-         cy - sin(h) * 20,
+    if (other == 1) {
+      stroke(255, 200, 100);
+      strokeWeight(1);
+      fill(230, 180, 80);
+    } else {
+      stroke(100, 100, 255);
+      strokeWeight(4);
+    }
+    line(cx - cos(h) * 30,
+         cy - sin(h) * 30,
          cx + cos(h) * (hoursRadius + 20),
          cy + sin(h) * (hoursRadius + 20));
+
+    if (label) {
+      float x = cx + cos(h) * (hoursRadius - 80);
+      float y = cy + sin(h) * (hoursRadius - 80);
+
+      textAlign(CENTER);
+      text(label, x, y);
+    }
   }
 
   void complication_nighttime()
@@ -410,7 +423,13 @@
     complication_solar_noon();
 
     hours_ticks();
-    hour_now(h);
+
+    //
+    hour_now(hour2radian(hour() - 5, minute()), 1, 'Québec');
+
+    // local time
+    hour_now(h, 0, null);
+
     calendar();
 
     event(hour(), 7, 0, 1, 'wake up!');
